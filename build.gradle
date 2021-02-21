@@ -28,11 +28,8 @@ test {
     useJUnitPlatform()
 }
 
-jar {
+bootJar {
     manifest {
-        attributes(
-                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': "to.charlie.spotifyplayhistory.SpotifyPlayHistoryApplication"
-        )
+        attributes 'Start-Class': "to.charlie.spotifyplayhistory.SpotifyPlayHistoryApplication"
     }
 }
