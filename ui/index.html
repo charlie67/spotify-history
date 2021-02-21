@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+</head>
+<body>
+<h1>Please login with Spotify to get started!</h1>
+<button onclick="LandingPage()">Sign in</button>
+</body>
+</html>
+
+<script>
+    function LandingPage() {
+        console.log("clicked")
+        fetch("/api/login")
+            .then((response) => response.text())
+            .then(response => {
+                window.location.replace(response);
+            })
+    }
+</script>
