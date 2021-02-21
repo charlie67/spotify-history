@@ -28,7 +28,7 @@ public class InfluxDbService
     }
 
     influxDB.createDatabase("spotify");
-    influxDB.createRetentionPolicy("defaultPolicy", "spotify", "365d", 1, true);
+    influxDB.createRetentionPolicy("defaultPolicy", "spotify", "730d", 1, true);
     influxDB.setLogLevel(InfluxDB.LogLevel.BASIC);
   }
 
