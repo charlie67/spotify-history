@@ -1,2 +1,2 @@
-FROM openjdk:14.0.2-jdk-oraclelinux8
+FROM nginx:mainline-alpine
 COPY ui /app.jar /usr/share/nginx/html
