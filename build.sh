@@ -1,6 +1,6 @@
 ./gradlew jar
-echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
-sudo docker build --tag ${DOCKER_USERNAME}/spotify-wrapped-server:${GITHUB_REF##*/} -f Dockerfile-server .
-sudo docker build --tag ${DOCKER_USERNAME}/spotify-wrapped-ui:${GITHUB_REF##*/} -f Dockerfile-ui .
-sudo docker push ${DOCKER_USERNAME}/spotify-wrapped-server:${GITHUB_REF##*/}
-sudo docker push ${DOCKER_USERNAME}/spotify-wrapped-ui:${GITHUB_REF##*/}
+echo $$2 | docker login -u $1 --password-stdin
+sudo docker build --tag $1/spotify-wrapped-server:${GITHUB_REF##*/} -f Dockerfile-server .
+sudo docker build --tag $1/spotify-wrapped-ui:${GITHUB_REF##*/} -f Dockerfile-ui .
+sudo docker push $1/spotify-wrapped-server:${GITHUB_REF##*/}
+sudo docker push $1/spotify-wrapped-ui:${GITHUB_REF##*/}
