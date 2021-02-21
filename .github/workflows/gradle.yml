@@ -26,4 +26,4 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: Docker build
-      run: ./build.sh DOCKER_USERNAME DOCKER_PASSWORD
+      run: ./build.sh $DOCKER_USERNAME $DOCKER_PASSWORD
