@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.wrapper.spotify.SpotifyApi;
+import com.wrapper.spotify.enums.ModelObjectType;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;
 import com.wrapper.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import com.wrapper.spotify.model_objects.specification.ArtistSimplified;
@@ -129,7 +130,9 @@ public class SpotifyApiService
         oldestTime = timePlayed - 1;
       }
 
-      if (play.isPresent())
+      // if it already exists move on
+      // or if this is not a track - could be a podcast episode
+      if (play.isPresent() || item.getTrack().getType() != ModelObjectType.TRACK)
       {
         //if there is one item in there then it follows that the rest should be there
         LOGGER.info("Skipping song at time {}", timePlayed);
