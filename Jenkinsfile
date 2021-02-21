@@ -6,6 +6,7 @@ pipeline {
             steps {
                 sh "build.sh"
             }
+        }
         stage('deploy') {
             steps {
                 sh "deploy.sh"
