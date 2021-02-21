@@ -50,8 +50,6 @@ public class SpotifyApiService
 
   private final ArtistRepository artistRepository;
 
-  private final TokenRepository tokenRepository;
-
   public SpotifyApiService(InfluxDbService influxDbService,
                            PlayRepository playRepository,
                            ArtistRepository artistRepository,
@@ -61,12 +59,11 @@ public class SpotifyApiService
     this.influxDbService = influxDbService;
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
-    this.tokenRepository = tokenRepository;
 
     spotifyApi = new SpotifyApi.Builder()
-        .setClientId(spotifyProperties.getClientId())
-        .setClientSecret(spotifyProperties.getClientSecret())
-        .setRedirectUri(new URI(spotifyProperties.getBaseRedirectUri()))
+        .setClientId(spotifyProperties.getSpotifyClientId())
+        .setClientSecret(spotifyProperties.getSpotifyClientSecret())
+        .setRedirectUri(new URI(spotifyProperties.getSpotifyBaseRedirectUri()))
         .build();
 
     Optional<Token> token = tokenRepository.findById(1);

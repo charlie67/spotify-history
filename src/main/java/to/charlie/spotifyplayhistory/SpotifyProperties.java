@@ -4,41 +4,79 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 
-@ConfigurationProperties(prefix = "spotify")
+@ConfigurationProperties(prefix = "history")
 @Configuration("spotifyProperties")
 public class SpotifyProperties
 {
-  private String clientId;
-  private String clientSecret;
-  private String baseRedirectUri;
+  private String spotifyClientId;
 
-  public String getClientId()
+  private String spotifyClientSecret;
+
+  private String spotifyBaseRedirectUri;
+
+  private String influxUrl;
+
+  private String influxPassword;
+
+  private String influxUsername;
+
+  public String getSpotifyClientId()
   {
-    return clientId;
+    return spotifyClientId;
   }
 
-  public void setClientId(String clientId)
+  public void setSpotifyClientId(String spotifyClientId)
   {
-    this.clientId = clientId;
+    this.spotifyClientId = spotifyClientId;
   }
 
-  public String getClientSecret()
+  public String getSpotifyClientSecret()
   {
-    return clientSecret;
+    return spotifyClientSecret;
   }
 
-  public void setClientSecret(String clientSecret)
+  public void setSpotifyClientSecret(String spotifyClientSecret)
   {
-    this.clientSecret = clientSecret;
+    this.spotifyClientSecret = spotifyClientSecret;
   }
 
-  public String getBaseRedirectUri()
+  public String getSpotifyBaseRedirectUri()
   {
-    return baseRedirectUri;
+    return spotifyBaseRedirectUri;
   }
 
-  public void setBaseRedirectUri(String baseRedirectUri)
+  public void setSpotifyBaseRedirectUri(String spotifyBaseRedirectUri)
   {
-    this.baseRedirectUri = baseRedirectUri;
+    this.spotifyBaseRedirectUri = spotifyBaseRedirectUri;
+  }
+
+  public String getInfluxUrl()
+  {
+    return influxUrl;
+  }
+
+  public void setInfluxUrl(String influxUrl)
+  {
+    this.influxUrl = influxUrl;
+  }
+
+  public String getInfluxPassword()
+  {
+    return influxPassword;
+  }
+
+  public void setInfluxPassword(String influxPassword)
+  {
+    this.influxPassword = influxPassword;
+  }
+
+  public String getInfluxUsername()
+  {
+    return influxUsername;
+  }
+
+  public void setInfluxUsername(String influxUsername)
+  {
+    this.influxUsername = influxUsername;
   }
 }
