@@ -1,2 +1,2 @@
 FROM nginx:mainline-alpine
-COPY ui /app.jar /usr/share/nginx/html
+COPY ui/ /usr/share/nginx/html
