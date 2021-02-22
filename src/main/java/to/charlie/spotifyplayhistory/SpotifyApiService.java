@@ -52,6 +52,8 @@ public class SpotifyApiService
 
   private final ArtistRepository artistRepository;
 
+  private final TokenRepository tokenRepository;
+
   public SpotifyApiService(InfluxDbService influxDbService,
                            PlayRepository playRepository,
                            ArtistRepository artistRepository,
@@ -61,6 +63,7 @@ public class SpotifyApiService
     this.influxDbService = influxDbService;
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
+    this.tokenRepository = tokenRepository;
 
     spotifyApi = new SpotifyApi.Builder()
         .setClientId(spotifyProperties.getSpotifyClientId())
@@ -113,7 +116,14 @@ public class SpotifyApiService
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
 
       // Set access token for further "spotifyApi" object usage
+      String refreshToken = authorizationCodeCredentials.getRefreshToken();
       spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+      spotifyApi.setRefreshToken(refreshToken);
+      Token token = new Token();
+      token.setRefreshToken(refreshToken);
+      // hard code this uhhh
+      token.setId(1);
+      tokenRepository.save(token);
 
       LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
     }
