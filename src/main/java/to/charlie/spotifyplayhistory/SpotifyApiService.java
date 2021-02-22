@@ -7,6 +7,8 @@ import java.sql.Date;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hc.core5.http.ParseException;
@@ -88,6 +90,36 @@ public class SpotifyApiService
     if (token.isEmpty())
     {
       LOGGER.info("no refresh token present");
+    }
+  }
+
+  // todo start this after the token has been set by the controller
+  @Scheduled(fixedDelay = 1000000)
+  public void refreshAuthCode()
+  {
+    if (spotifyApi.getRefreshToken() != null)
+    {
+      LOGGER.error("no refresh token can't refresh");
+      return;
+    }
+
+    try
+    {
+      final CompletableFuture<AuthorizationCodeCredentials> authorizationCodeCredentialsFuture = spotifyApi.authorizationCodeRefresh()
+          .build()
+          .executeAsync();
+
+      // Example Only. Never block in production code.
+      final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
+
+      // Set access token for further "spotifyApi" object usage
+      spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+
+      LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
+    }
+    catch (CompletionException e)
+    {
+      LOGGER.error("Error refreshing token: ", e);
     }
   }
 
