@@ -44,7 +44,7 @@ public class SpotifyApiService
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyApiService.class);
 
-  public final SpotifyApi spotifyApi;
+  public SpotifyApi spotifyApi;
 
   private final InfluxDbService influxDbService;
 
@@ -65,24 +65,24 @@ public class SpotifyApiService
     this.artistRepository = artistRepository;
     this.tokenRepository = tokenRepository;
 
-    spotifyApi = new SpotifyApi.Builder()
-        .setClientId(spotifyProperties.getSpotifyClientId())
-        .setClientSecret(spotifyProperties.getSpotifyClientSecret())
-        .setRedirectUri(new URI(spotifyProperties.getSpotifyBaseRedirectUri()))
-        .build();
-
     Optional<Token> token = tokenRepository.findById(1);
     token.ifPresent(value -> {
       LOGGER.info("Setting refresh token from database");
-      spotifyApi.setRefreshToken(value.getRefreshToken());
       try
       {
+        spotifyApi = new SpotifyApi.Builder()
+            .setClientId(spotifyProperties.getSpotifyClientId())
+            .setClientSecret(spotifyProperties.getSpotifyClientSecret())
+            .setRedirectUri(new URI(spotifyProperties.getSpotifyBaseRedirectUri()))
+            .setRefreshToken(value.getRefreshToken())
+            .build();
+
         AuthorizationCodeRefreshRequest request = spotifyApi.authorizationCodeRefresh().build();
         AuthorizationCodeCredentials credentials = request.execute();
         spotifyApi.setAccessToken(credentials.getAccessToken());
         LOGGER.info("Refresh credentials expire in: {}", credentials.getExpiresIn());
       }
-      catch (IOException | ParseException | SpotifyWebApiException e)
+      catch (IOException | ParseException | URISyntaxException | SpotifyWebApiException e)
       {
         LOGGER.error("unable to refresh authorisation code ", e);
         // don't let this happen again :grrr:
@@ -92,6 +92,12 @@ public class SpotifyApiService
 
     if (token.isEmpty())
     {
+      spotifyApi = new SpotifyApi.Builder()
+          .setClientId(spotifyProperties.getSpotifyClientId())
+          .setClientSecret(spotifyProperties.getSpotifyClientSecret())
+          .setRedirectUri(new URI(spotifyProperties.getSpotifyBaseRedirectUri()))
+          .build();
+
       LOGGER.info("no refresh token present");
     }
   }
@@ -116,14 +122,7 @@ public class SpotifyApiService
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
 
       // Set access token for further "spotifyApi" object usage
-      String refreshToken = authorizationCodeCredentials.getRefreshToken();
       spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-      spotifyApi.setRefreshToken(refreshToken);
-      Token token = new Token();
-      token.setRefreshToken(refreshToken);
-      // hard code this uhhh
-      token.setId(1);
-      tokenRepository.save(token);
 
       LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
     }
