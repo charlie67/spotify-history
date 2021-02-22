@@ -106,11 +106,7 @@ public class SpotifyApiService
   @Scheduled(fixedDelay = 1000000)
   public void refreshAuthCode()
   {
-    if (spotifyApi.getRefreshToken() != null)
-    {
-      LOGGER.error("no refresh token can't refresh");
-      return;
-    }
+    LOGGER.info("Refreshing access token");
 
     try
     {

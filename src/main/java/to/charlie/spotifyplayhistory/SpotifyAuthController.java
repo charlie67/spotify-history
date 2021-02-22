@@ -1,6 +1,8 @@
 package to.charlie.spotifyplayhistory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;
 import com.wrapper.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import com.wrapper.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
@@ -31,12 +34,16 @@ public class SpotifyAuthController
 
   private final TokenRepository tokenRepository;
 
+  private final SpotifyProperties spotifyProperties;
+
   @Autowired
   public SpotifyAuthController(SpotifyApiService spotifyApiService,
-                               TokenRepository tokenRepository)
+                               TokenRepository tokenRepository,
+                               SpotifyProperties spotifyProperties)
   {
     this.spotifyApiService = spotifyApiService;
     this.tokenRepository = tokenRepository;
+    this.spotifyProperties = spotifyProperties;
   }
 
   @GetMapping("/login")
@@ -61,8 +68,16 @@ public class SpotifyAuthController
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeRequest.execute();
 
       String refreshToken = authorizationCodeCredentials.getRefreshToken();
+
+      spotifyApiService.spotifyApi = new SpotifyApi.Builder()
+          .setAccessToken(authorizationCodeCredentials.getAccessToken())
+          .setRefreshToken(refreshToken)
+          .setClientSecret(spotifyProperties.getSpotifyClientSecret())
+          .setClientId(spotifyProperties.getSpotifyClientId())
+          .setRedirectUri(new URI(spotifyProperties.getSpotifyBaseRedirectUri()))
+          .build();
+
       spotifyApiService.spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-      spotifyApiService.spotifyApi.setRefreshToken(refreshToken);
 
       Token token = new Token();
       token.setRefreshToken(refreshToken);
@@ -72,7 +87,7 @@ public class SpotifyAuthController
 
       LOGGER.info("Refresh credentials expire in: {}", authorizationCodeCredentials.getExpiresIn());
     }
-    catch (ParseException | IOException | SpotifyWebApiException e)
+    catch (ParseException | IOException | SpotifyWebApiException | URISyntaxException e)
     {
       LOGGER.error("Error in authentication", e);
     }
