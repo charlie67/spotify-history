@@ -1,0 +1,63 @@
+version: '2'
+services:
+  pg-spotify:
+    container_name: pg-spotify
+    hostname: pg-spotify
+    image: postgres:9.6-alpine
+    networks:
+      - spotify
+    ports:
+      - "60104:5432"
+    environment:
+      POSTGRES_USER: spotify
+      POSTGRES_PASSWORD: spotify
+      POSTGRES_DB: spotify
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - /opt/play-history/pg:/var/lib/postgresql/data
+    restart: always
+    
+  influx:
+    container_name: influx
+    hostname: influx
+    image: influxdb:1.8.4
+    networks:
+      - spotify
+    ports:
+      - "60103:8086"
+    environment:
+      INFLUX_ADMIN_USER: spotify
+      INFLUX_ADMIN_PASSWORD: spotify
+    volumes:
+      - /opt/play-history/influx:/var/lib/influxdb
+    restart: always
+    
+  web:
+    container_name: play-history-ui
+    image: charlie67/spotify-history-ui:master
+    networks:
+      - spotify
+    ports:
+      - "60101:80"
+    restart: always
+    
+  server:
+    container_name: play-history-server
+    image: charlie67/spotify-history-server:master
+    networks:
+      - spotify
+    ports:
+      - "60102:8080"
+    environment:
+      - SPOTIFY_CLIENT_ID=***
+      - SPOTIFY_CLIENT_SECRET=****
+      - SPOTIFY_REDIRECT_URI=***
+      - INFLUX_LOCATION=http://influx:8086
+      - INFLUX_PASSWORD=spotify
+      - INFLUX_USERNAME=spotify
+      - POSTGRES_LOCATION=jdbc:postgresql://pg-spotify:5432/spotify
+    restart: always
+ 
+networks:
+  spotify:
+    driver: bridge
