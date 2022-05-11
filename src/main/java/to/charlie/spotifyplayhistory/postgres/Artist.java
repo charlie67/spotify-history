@@ -2,12 +2,10 @@ package to.charlie.spotifyplayhistory.postgres;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-
-import org.influxdb.annotation.Column;
-
 
 @Entity
 public class Artist

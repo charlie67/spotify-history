@@ -7,13 +7,9 @@ import java.sql.Date;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.hc.core5.http.ParseException;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -137,11 +133,6 @@ public class SpotifyApiService
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
   {
     LOGGER.info("Got play history");
-
-    BatchPoints batchPoints = BatchPoints
-        .database("spotify")
-        .retentionPolicy("defaultPolicy")
-        .build();
 
     long oldestTime = Long.MAX_VALUE;
     for (PlayHistory item : history.getItems())
