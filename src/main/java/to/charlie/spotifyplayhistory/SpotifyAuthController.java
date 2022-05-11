@@ -81,7 +81,7 @@ public class SpotifyAuthController
 
       Token token = new Token();
       token.setRefreshToken(refreshToken);
-      // hard code this uhhhhhhhhhhhhh
+      // hard code this for now
       token.setId(1);
       tokenRepository.save(token);
 

@@ -30,7 +30,6 @@ import com.wrapper.spotify.model_objects.specification.PlayHistory;
 import com.wrapper.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 import com.wrapper.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
 
-import to.charlie.spotifyplayhistory.influx.InfluxDbService;
 import to.charlie.spotifyplayhistory.postgres.Artist;
 import to.charlie.spotifyplayhistory.postgres.ArtistRepository;
 import to.charlie.spotifyplayhistory.postgres.Play;
@@ -46,24 +45,17 @@ public class SpotifyApiService
 
   public SpotifyApi spotifyApi;
 
-  private final InfluxDbService influxDbService;
-
   private final PlayRepository playRepository;
 
   private final ArtistRepository artistRepository;
 
-  private final TokenRepository tokenRepository;
-
-  public SpotifyApiService(InfluxDbService influxDbService,
-                           PlayRepository playRepository,
+  public SpotifyApiService(PlayRepository playRepository,
                            ArtistRepository artistRepository,
                            SpotifyProperties spotifyProperties,
                            TokenRepository tokenRepository) throws URISyntaxException
   {
-    this.influxDbService = influxDbService;
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
-    this.tokenRepository = tokenRepository;
 
     Optional<Token> token = tokenRepository.findById(1);
     token.ifPresent(value -> {
@@ -110,22 +102,22 @@ public class SpotifyApiService
 
     try
     {
-      final CompletableFuture<AuthorizationCodeCredentials> authorizationCodeCredentialsFuture = spotifyApi.authorizationCodeRefresh()
-          .build()
-          .executeAsync();
+      final AuthorizationCodeRefreshRequest authorizationCodeRefreshRequest = spotifyApi.authorizationCodeRefresh()
+          .build();
 
-      // Example Only. Never block in production code.
-      final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
-
-      // Set access token for further "spotifyApi" object usage
-      spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-
-      LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
+      authorizationCodeRefreshRequest.executeAsync().thenAccept(this::authCodeCallback);
     }
     catch (CompletionException e)
     {
       LOGGER.error("Error refreshing token: ", e);
     }
+  }
+
+  public void authCodeCallback(AuthorizationCodeCredentials authorizationCodeCredentials) {
+    // Set access token for further "spotifyApi" object usage
+    spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+
+    LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
   }
 
   @Scheduled(fixedDelay = 600000)
@@ -177,21 +169,7 @@ public class SpotifyApiService
       String trackName = track.getName();
       long songLength = track.getDurationMs();
 
-      // only care about the first artist ... for influxdb
-      ArtistSimplified artist = track.getArtists()[0];
-
-      Point point = Point.measurement("play")
-          .time(timePlayed, TimeUnit.MILLISECONDS)
-          .addField("trackId", track.getId())
-          .addField("trackName", track.getName())
-          .addField("songLength", track.getDurationMs())
-          .addField("artistName", artist.getName())
-          .addField("artistId", artist.getId())
-          .build();
-
-      batchPoints.point(point);
-
-      // now do the postgres bit
+      // save data to postgres
       Play pgPlay = new Play();
       Set<Artist> artists = new HashSet<>();
 
@@ -217,17 +195,6 @@ public class SpotifyApiService
           .setSongLength(songLength)
           .setArtists(artists);
       playRepository.save(pgPlay);
-    }
-
-    if (!batchPoints.getPoints().isEmpty())
-    {
-      LOGGER.info("writing changes to database");
-      influxDbService.write(batchPoints);
-    }
-    else
-    {
-      // no changes - give up
-      return;
     }
 
     if (history.getNext() != null)
