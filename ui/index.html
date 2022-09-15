@@ -37,7 +37,7 @@
     };
 
     function getLoginMessage() {
-        fetch("http://localhost:8080/loginMessage")
+        fetch("/api/loginMessage")
             .then((response) => response.text())
             .then(response => {
                 console.log(response)
@@ -46,7 +46,7 @@
     }
 
     function LandingPage() {
-        fetch("http://localhost:8080/login", {mode: 'no-cors'})
+        fetch("/api/login", {mode: 'no-cors'})
             .then((response) => response.text())
             .then(response => {
                 window.location.replace(response);
@@ -59,7 +59,7 @@
         let amount = document.getElementById('amount').value;
         let name = document.getElementById('name').value;
 
-        let endpoint = `http://localhost:8080/playlist/create/${startTime}/${endTime}/${amount}?name=${name}`
+        let endpoint = `/api/playlist/create/${startTime}/${endTime}/${amount}?name=${name}`
 
         console.log(endpoint)
 
