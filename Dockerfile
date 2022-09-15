@@ -7,7 +7,7 @@ COPY ui/index.html /var/www/html/index.html
 COPY ui/nginx.conf /etc/nginx/sites-enabled/nginx.conf
 EXPOSE 80
 COPY entrypoint.sh entrypoint.sh
-RUN chmod 777 start.sh
+RUN chmod 777 entrypoint.sh
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 RUN rm /etc/nginx/sites-enabled/default
 CMD ./entrypoint.sh
