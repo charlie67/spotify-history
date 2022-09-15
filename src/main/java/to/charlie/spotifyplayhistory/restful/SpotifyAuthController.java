@@ -1,4 +1,4 @@
-package to.charlie.spotifyplayhistory;
+package to.charlie.spotifyplayhistory.restful;
 
 import java.io.IOException;
 import java.net.URI;
@@ -8,24 +8,27 @@ import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
-import com.wrapper.spotify.SpotifyApi;
-import com.wrapper.spotify.exceptions.SpotifyWebApiException;
-import com.wrapper.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import com.wrapper.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
-import com.wrapper.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-
-import to.charlie.spotifyplayhistory.postgres.Token;
-import to.charlie.spotifyplayhistory.postgres.TokenRepository;
+import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
+import to.charlie.spotifyplayhistory.SpotifyApiService;
+import to.charlie.spotifyplayhistory.config.SpotifyProperties;
+import to.charlie.spotifyplayhistory.domain.entity.Token;
+import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
 
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/")
 public class SpotifyAuthController
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyAuthController.class);
@@ -48,18 +51,18 @@ public class SpotifyAuthController
 
   @GetMapping("/login")
   @ResponseBody
-  public String spotifyLogin()
+  public RedirectView spotifyLogin()
   {
     AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApiService.spotifyApi.authorizationCodeUri()
-        .scope("user-read-recently-played")
+        .scope("user-read-recently-played playlist-modify-public playlist-modify-private")
         .show_dialog(true)
         .build();
 
-    return authorizationCodeUriRequest.execute().toString();
+    return new RedirectView(authorizationCodeUriRequest.execute().toString());
   }
 
   @GetMapping("/get-user-code")
-  public void getSpotifyUserCode(@RequestParam("code") String userCode)
+  public ResponseEntity<String> getSpotifyUserCode(@RequestParam("code") String userCode)
   {
     AuthorizationCodeRequest authorizationCodeRequest = spotifyApiService.spotifyApi.authorizationCode(userCode).build();
 
@@ -91,5 +94,7 @@ public class SpotifyAuthController
     {
       LOGGER.error("Error in authentication", e);
     }
+
+    return ResponseEntity.ok("Auth successful");
   }
 }

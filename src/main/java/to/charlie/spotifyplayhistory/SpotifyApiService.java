@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
@@ -14,24 +16,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import com.wrapper.spotify.SpotifyApi;
-import com.wrapper.spotify.enums.ModelObjectType;
-import com.wrapper.spotify.exceptions.SpotifyWebApiException;
-import com.wrapper.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import com.wrapper.spotify.model_objects.specification.ArtistSimplified;
-import com.wrapper.spotify.model_objects.specification.PagingCursorbased;
-import com.wrapper.spotify.model_objects.specification.PlayHistory;
-import com.wrapper.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
-import com.wrapper.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
-
-import to.charlie.spotifyplayhistory.postgres.Artist;
-import to.charlie.spotifyplayhistory.postgres.ArtistRepository;
-import to.charlie.spotifyplayhistory.postgres.Play;
-import to.charlie.spotifyplayhistory.postgres.PlayRepository;
-import to.charlie.spotifyplayhistory.postgres.Token;
-import to.charlie.spotifyplayhistory.postgres.TokenRepository;
+import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.enums.ModelObjectType;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.PagingCursorbased;
+import se.michaelthelin.spotify.model_objects.specification.PlayHistory;
+import se.michaelthelin.spotify.model_objects.specification.Playlist;
+import se.michaelthelin.spotify.model_objects.specification.User;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
+import se.michaelthelin.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
+import to.charlie.spotifyplayhistory.config.SpotifyProperties;
+import to.charlie.spotifyplayhistory.domain.entity.Artist;
+import to.charlie.spotifyplayhistory.domain.entity.Play;
+import to.charlie.spotifyplayhistory.domain.entity.Token;
+import to.charlie.spotifyplayhistory.domain.repository.ArtistRepository;
+import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
+import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
 
 
 @Service
@@ -109,26 +113,27 @@ public class SpotifyApiService
     }
   }
 
-  public void authCodeCallback(AuthorizationCodeCredentials authorizationCodeCredentials) {
+  public void authCodeCallback(AuthorizationCodeCredentials authorizationCodeCredentials)
+  {
     // Set access token for further "spotifyApi" object usage
     spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
 
     LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
   }
 
-  @Scheduled(fixedDelay = 600000)
-  public void getPlayHistory()
-  {
-    if (!StringUtils.hasText(spotifyApi.getAccessToken()))
-    {
-      LOGGER.info("Skipping getting play history");
-      return;
-    }
-    LOGGER.info("getting play history");
-
-    GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
-    request.executeAsync().thenAccept(this::savePlayHistory);
-  }
+  //  @Scheduled(fixedDelay = 600000)
+  //  public void getPlayHistory()
+  //  {
+  //    if (!StringUtils.hasText(spotifyApi.getAccessToken()))
+  //    {
+  //      LOGGER.info("Skipping getting play history");
+  //      return;
+  //    }
+  //    LOGGER.info("getting play history");
+  //
+  //    GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
+  //    request.executeAsync().thenAccept(this::savePlayHistory);
+  //  }
 
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
   {
@@ -201,5 +206,24 @@ public class SpotifyApiService
           .build();
       request.executeAsync().thenAccept(this::savePlayHistory);
     }
+  }
+
+  public void createPlaylistWithNameAndTracks(String name,
+                                              Set<String> trackIds) throws IOException, ParseException, SpotifyWebApiException
+  {
+    User user = spotifyApi.getCurrentUsersProfile().build().execute();
+    String userId = user.getId();
+
+    Playlist playlist = spotifyApi.createPlaylist(userId, name).build().execute();
+    List<String> trackUris = new ArrayList<>(trackIds.size());
+
+    trackIds.forEach(id -> {
+      String uri = "spotify:track:" + id;
+      trackUris.add(uri);
+    });
+
+    String[] uriArray = trackUris.toArray(new String[0]);
+    SnapshotResult snapshotResult = spotifyApi.addItemsToPlaylist(playlist.getId(), uriArray).build().execute();
+    LOGGER.info("Created playlist {}", snapshotResult.toString());
   }
 }
