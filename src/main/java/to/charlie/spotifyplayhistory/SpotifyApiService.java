@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -222,8 +223,13 @@ public class SpotifyApiService
       trackUris.add(uri);
     });
 
+    int chunk = 50;
     String[] uriArray = trackUris.toArray(new String[0]);
-    SnapshotResult snapshotResult = spotifyApi.addItemsToPlaylist(playlist.getId(), uriArray).build().execute();
-    LOGGER.info("Created playlist {}", snapshotResult.toString());
+    for (int i = 0; i < uriArray.length; i += chunk)
+    {
+      String[] uriChunk = Arrays.copyOfRange(uriArray, i, Math.min(uriArray.length, i + chunk));
+      SnapshotResult snapshotResult = spotifyApi.addItemsToPlaylist(playlist.getId(), uriChunk).build().execute();
+      LOGGER.info("Created playlist {}", snapshotResult.toString());
+    }
   }
 }
