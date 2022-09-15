@@ -25,4 +25,5 @@ jobs:
       env:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      run: ./build.sh $DOCKER_USERNAME $DOCKER_PASSWORD
+        TAG_NAME: ${{ github.event.number }}
+      run: ./build.sh $DOCKER_USERNAME $DOCKER_PASSWORD $TAG_NAME
