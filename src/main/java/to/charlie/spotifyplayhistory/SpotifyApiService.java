@@ -123,6 +123,11 @@ public class SpotifyApiService
     LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
   }
 
+  public boolean areLoggedIn()
+  {
+    return StringUtils.hasText(spotifyApi.getAccessToken());
+  }
+
   @Scheduled(fixedDelay = 600000)
   public void getPlayHistory()
   {
