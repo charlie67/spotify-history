@@ -1,4 +1,4 @@
-package to.charlie.spotifyplayhistory;
+package to.charlie.spotifyplayhistory.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

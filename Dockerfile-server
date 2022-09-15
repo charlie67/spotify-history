@@ -1,3 +1,0 @@
-FROM openjdk:15.0.2-jdk-oraclelinux7
-COPY build/libs/spotify-play-history-0.0.1.jar /app.jar
-CMD ["java", "-jar", "-Dspring.profiles.active=default", "/app.jar"]

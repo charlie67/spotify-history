@@ -17,21 +17,6 @@ services:
       - /opt/play-history/pg:/var/lib/postgresql/data
     restart: always
     
-  influx:
-    container_name: influx
-    hostname: influx
-    image: influxdb:1.8.4
-    networks:
-      - spotify
-    ports:
-      - "60103:8086"
-    environment:
-      INFLUX_ADMIN_USER: spotify
-      INFLUX_ADMIN_PASSWORD: spotify
-    volumes:
-      - /opt/play-history/influx:/var/lib/influxdb
-    restart: always
-    
   web:
     container_name: play-history-ui
     image: charlie67/spotify-history-ui:master

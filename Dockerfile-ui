@@ -1,2 +1,0 @@
-FROM nginx:mainline-alpine
-COPY ui/ /usr/share/nginx/html

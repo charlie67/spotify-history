@@ -1,4 +1,4 @@
-package to.charlie.spotifyplayhistory.postgres;
+package to.charlie.spotifyplayhistory.domain.entity;
 
 import java.util.Set;
 

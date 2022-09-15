@@ -1,0 +1,17 @@
+version: '2'
+services:
+  pg-spotify:
+    container_name: pg-spotify
+    hostname: pg-spotify
+    image: postgres:9.6-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: spotify
+      POSTGRES_PASSWORD: spotify
+      POSTGRES_DB: spotify
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./docker_data/pg:/var/lib/postgresql/data
+      - ./docker_data/tmp:/tmp
+    restart: always
