@@ -3,20 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <title>Login Page</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 </head>
 <body>
-<h1>Please login with Spotify to get started!</h1>
+<h1 id="header-message">.</h1>
 <button onclick="LandingPage()">Sign in</button>
+
+<h1>Playlist Creation</h1>
+<form action="#" id="form" onsubmit="sendCommand();return false;">
+
+    <label for="startTime">Start Time</label>
+    <input id="startTime" name="startTime" type="date"><br><br>
+
+    <label for="endTime">End Time</label>
+    <input id="endTime" name="endTime" type="date"><br><br>
+
+    <label for="amount">Amount</label>
+    <input id="amount" name="amount" type="text"><br><br>
+
+    <label for="name">Name</label>
+    <input id="name" name="name" type="text"><br><br>
+
+    <button>Send</button>
+</form>
 </body>
 </html>
 
 <script>
+    window.onload = function () {
+        getLoginMessage();
+    };
+
+    function getLoginMessage() {
+        fetch("/api/loginMessage")
+            .then((response) => response.text())
+            .then(response => {
+                console.log(response)
+                $("#header-message").text(response);
+            })
+    }
+
     function LandingPage() {
-        console.log("clicked")
-        fetch("/api/login")
+        fetch("/api/login", {mode: 'no-cors'})
             .then((response) => response.text())
             .then(response => {
                 window.location.replace(response);
+            })
+    }
+
+    function sendCommand() {
+        let startTime = document.getElementById('startTime').value.replace(/-/g, '');
+        let endTime = document.getElementById('endTime').value.replace(/-/g, '');
+        let amount = document.getElementById('amount').value;
+        let name = document.getElementById('name').value;
+
+        let endpoint = `/api/playlist/create/${startTime}/${endTime}/${amount}?name=${name}`
+
+        console.log(endpoint)
+
+        fetch(endpoint, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                console.log(response)
             })
     }
 </script>

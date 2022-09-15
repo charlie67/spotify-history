@@ -39,6 +39,7 @@ public class PlayListCreationController
                                                @PathVariable(value = "amount") int amount,
                                                @RequestParam(value = "name") String name) throws ParseException
   {
+    log.info("Received playlist creation request");
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
     long dateSmallMillis = dateFormat.parse(String.format("%s 00:00:00", dateSmall)).getTime();
     long dateLargeMillis = dateFormat.parse(String.format("%s 23:59:59", dateLarge)).getTime();
