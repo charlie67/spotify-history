@@ -16,30 +16,19 @@ services:
     volumes:
       - /opt/play-history/pg:/var/lib/postgresql/data
     restart: always
-    
-  web:
-    container_name: play-history-ui
-    image: charlie67/spotify-history-ui:master
-    networks:
-      - spotify
-    ports:
-      - "60101:80"
-    restart: always
-    
+
   server:
-    container_name: play-history-server
-    image: charlie67/spotify-history-server:master
+    container_name: spotify-history
+    hostname: spotify-history
+    image: charlie67/spotify-history:1.1.0
     networks:
       - spotify
     ports:
-      - "60102:8080"
+      - "60102:80"
     environment:
       - SPOTIFY_CLIENT_ID=***
       - SPOTIFY_CLIENT_SECRET=****
       - SPOTIFY_REDIRECT_URI=***
-      - INFLUX_LOCATION=http://influx:8086
-      - INFLUX_PASSWORD=spotify
-      - INFLUX_USERNAME=spotify
       - POSTGRES_LOCATION=jdbc:postgresql://pg-spotify:5432/spotify
     restart: always
  
