@@ -5,12 +5,12 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.stereotype.Repository;
 
 import to.charlie.spotifyplayhistory.domain.entity.Play;
 
 
-@RepositoryRestResource
+@Repository
 public interface PlayRepository extends CrudRepository<Play, Integer>
 {
   Optional<Play> findById(long id);
