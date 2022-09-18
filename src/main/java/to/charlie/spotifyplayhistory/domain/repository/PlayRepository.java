@@ -7,15 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import to.charlie.spotifyplayhistory.domain.entity.Play;
+import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 
 
 @Repository
-public interface PlayRepository extends CrudRepository<Play, Integer>
+public interface PlayRepository extends CrudRepository<PlayEntity, Integer>
 {
-  Optional<Play> findById(long id);
+  Optional<PlayEntity> findById(long id);
 
-  @Query(value = "SELECT p FROM Play p WHERE p.id <= :id2 and p.id >= :id1")
-  Set<Play> findAllBetweenTwoTimes(long id1,
-                                   long id2);
+  @Query(value = "SELECT p FROM PlayEntity p WHERE p.id <= :id2 and p.id >= :id1")
+  Set<PlayEntity> findAllBetweenTwoTimes(long id1,
+                                         long id2);
 }

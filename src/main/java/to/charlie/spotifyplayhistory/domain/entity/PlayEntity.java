@@ -10,9 +10,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 
 @Entity
-public class Play
+@NoArgsConstructor
+@Getter
+public class PlayEntity
 {
   // this is the time
   @Id
@@ -33,19 +38,14 @@ public class Play
       name = "play_artist",
       joinColumns = @JoinColumn(name = "play_id"),
       inverseJoinColumns = @JoinColumn(name = "artist_id"))
-  private Set<Artist> artists;
-
-  public Play()
-  {
-    // empty
-  }
+  private Set<ArtistEntity> artists;
 
   public long getId()
   {
     return id;
   }
 
-  public Play setId(long time)
+  public PlayEntity setId(long time)
   {
     this.id = time;
     return this;
@@ -56,7 +56,7 @@ public class Play
     return trackId;
   }
 
-  public Play setTrackId(String trackId)
+  public PlayEntity setTrackId(String trackId)
   {
     this.trackId = trackId;
     return this;
@@ -67,7 +67,7 @@ public class Play
     return trackName;
   }
 
-  public Play setTrackName(String trackName)
+  public PlayEntity setTrackName(String trackName)
   {
     this.trackName = trackName;
     return this;
@@ -78,19 +78,19 @@ public class Play
     return songLength;
   }
 
-  public Play setSongLength(long songLength)
+  public PlayEntity setSongLength(long songLength)
   {
     this.songLength = songLength;
     return this;
   }
 
-  public Set<Artist> getArtists()
+  public Set<ArtistEntity> getArtists()
   {
     return artists;
   }
 
-  public void setArtists(Set<Artist> artists)
+  public void setArtists(Set<ArtistEntity> artistEntities)
   {
-    this.artists = artists;
+    this.artists = artistEntities;
   }
 }

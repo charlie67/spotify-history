@@ -5,11 +5,11 @@ import java.util.Optional;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import to.charlie.spotifyplayhistory.domain.entity.Artist;
+import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
 
 
 @Repository
-public interface ArtistRepository extends CrudRepository<Artist, Integer>
+public interface ArtistRepository extends CrudRepository<ArtistEntity, Integer>
 {
-  Optional<Artist> findByArtistId(String artistId);
+  Optional<ArtistEntity> findByArtistId(String artistId);
 }

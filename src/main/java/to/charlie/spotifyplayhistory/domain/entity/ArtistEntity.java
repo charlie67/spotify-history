@@ -7,8 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 
-@Entity
-public class Artist
+@Entity()
+public class ArtistEntity
 {
   @Column(name = "artistName")
   private String artistName;
@@ -18,9 +18,9 @@ public class Artist
   private String artistId;
 
   @ManyToMany(mappedBy = "artists")
-  private Set<Play> playSet;
+  private Set<PlayEntity> playEntitySet;
 
-  public Artist()
+  public ArtistEntity()
   {
     // none
   }
@@ -30,7 +30,7 @@ public class Artist
     return artistName;
   }
 
-  public Artist setArtistName(String artistName)
+  public ArtistEntity setArtistName(String artistName)
   {
     this.artistName = artistName;
     return this;
@@ -41,7 +41,7 @@ public class Artist
     return artistId;
   }
 
-  public Artist setArtistId(String artistId)
+  public ArtistEntity setArtistId(String artistId)
   {
     this.artistId = artistId;
     return this;

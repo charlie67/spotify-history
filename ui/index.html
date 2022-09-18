@@ -33,15 +33,19 @@
 
 <script>
     window.onload = function () {
-        getLoginMessage();
+        areLoggedIn();
     };
 
-    function getLoginMessage() {
-        fetch("/api/loginMessage")
+    function areLoggedIn() {
+        fetch("/api/loginState")
             .then((response) => response.text())
             .then(response => {
                 console.log(response)
-                $("#header-message").text(response);
+                if (response) {
+                    $("#header-message").text("Already logged in. Click here to login to a different account.");
+                } else {
+                    $("#header-message").text("Please login with Spotify to get started!");
+                }
             })
     }
 

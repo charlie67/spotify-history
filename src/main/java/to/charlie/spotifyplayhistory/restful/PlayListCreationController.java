@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import to.charlie.spotifyplayhistory.SpotifyApiService;
-import to.charlie.spotifyplayhistory.domain.entity.Play;
+import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
+import to.charlie.spotifyplayhistory.domain.service.SpotifyApiService;
 
 
 @RestController
@@ -44,10 +44,10 @@ public class PlayListCreationController
     long dateSmallMillis = dateFormat.parse(String.format("%s 00:00:00", dateSmall)).getTime();
     long dateLargeMillis = dateFormat.parse(String.format("%s 23:59:59", dateLarge)).getTime();
 
-    Set<Play> plays = playRepository.findAllBetweenTwoTimes(dateSmallMillis, dateLargeMillis);
+    Set<PlayEntity> playEntities = playRepository.findAllBetweenTwoTimes(dateSmallMillis, dateLargeMillis);
 
-    Map<String, Long> countMap = plays.stream()
-        .map(Play::getTrackId)
+    Map<String, Long> countMap = playEntities.stream()
+        .map(PlayEntity::getTrackId)
         .toList()
         .stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
