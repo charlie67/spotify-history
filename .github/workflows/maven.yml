@@ -17,11 +17,9 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 17
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
-    - name: Docker build
+    - name: Grant execute permission for mvnw
+      run: chmod +x mvnw
+    - name: Build
       env:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
