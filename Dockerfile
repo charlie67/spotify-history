@@ -2,7 +2,7 @@ FROM openjdk:17-buster
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y nginx
-COPY build/libs/spotify-play-history-0.0.1.jar /app.jar
+COPY target/spotify-history-0.0.1-SNAPSHOT.jar /app.jar
 COPY ui/index.html /var/www/html/index.html
 COPY ui/nginx.conf /etc/nginx/sites-enabled/nginx.conf
 EXPOSE 80
