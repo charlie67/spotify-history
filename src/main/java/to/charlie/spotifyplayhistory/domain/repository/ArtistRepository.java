@@ -11,5 +11,5 @@ import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
 @Repository
 public interface ArtistRepository extends CrudRepository<ArtistEntity, Integer>
 {
-  Optional<ArtistEntity> findByArtistId(String artistId);
+  Optional<ArtistEntity> findById(String artistId);
 }

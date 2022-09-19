@@ -1,49 +1,55 @@
 package to.charlie.spotifyplayhistory.domain.entity;
 
-import java.util.Set;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 
-@Entity()
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+
+@Entity(name = "artist")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ArtistEntity
 {
-  @Column(name = "artistName")
-  private String artistName;
+  @Column(name = "name")
+  private String name;
 
   @Id
-  @Column(name = "artistId")
-  private String artistId;
+  @Column(name = "id")
+  private String id;
 
-  @ManyToMany(mappedBy = "artists")
-  private Set<PlayEntity> playEntitySet;
+  @Column(name = "json")
+  private String rawJson;
 
-  public ArtistEntity()
+  @Override
+  public boolean equals(Object o)
   {
-    // none
+    if (this == o)
+    {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass())
+    {
+      return false;
+    }
+    ArtistEntity that = (ArtistEntity) o;
+    return Objects.equals(name, that.name) && Objects.equals(id, that.id) && Objects.equals(rawJson,
+                                                                                            that.rawJson);
   }
 
-  public String getArtistName()
+  @Override
+  public int hashCode()
   {
-    return artistName;
-  }
-
-  public ArtistEntity setArtistName(String artistName)
-  {
-    this.artistName = artistName;
-    return this;
-  }
-
-  public String getArtistId()
-  {
-    return artistId;
-  }
-
-  public ArtistEntity setArtistId(String artistId)
-  {
-    this.artistId = artistId;
-    return this;
+    return Objects.hash(name, id, rawJson);
   }
 }

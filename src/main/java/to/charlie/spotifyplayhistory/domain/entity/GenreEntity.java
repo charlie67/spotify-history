@@ -1,11 +1,12 @@
 package to.charlie.spotifyplayhistory.domain.entity;
 
-import javax.persistence.CascadeType;
+import java.util.UUID;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,20 +15,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity
+@Entity(name = "genre")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlayEntity
+public class GenreEntity
 {
-  // this is the time
   @Id
-  @Column(name = "id")
-  private long id;
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "id", nullable = false)
+  private UUID id;
 
-  @OneToOne(cascade = CascadeType.ALL, optional = false)
-  @JoinColumn(name = "track_id")
-  private TrackEntity trackEntity;
+  @Column(name = "genre")
+  private String genre;
 }

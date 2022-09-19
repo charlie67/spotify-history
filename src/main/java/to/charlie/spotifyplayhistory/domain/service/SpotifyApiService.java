@@ -5,10 +5,8 @@ import static to.charlie.spotifyplayhistory.domain.TopTimeRangeEnum.LONG_TERM;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,20 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.enums.ModelObjectType;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
-import se.michaelthelin.spotify.model_objects.specification.PagingCursorbased;
-import se.michaelthelin.spotify.model_objects.specification.PlayHistory;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
+import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
 import se.michaelthelin.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
 import to.charlie.spotifyplayhistory.config.SpotifyProperties;
-import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
-import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 import to.charlie.spotifyplayhistory.domain.entity.Token;
 import to.charlie.spotifyplayhistory.domain.repository.ArtistRepository;
 import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
@@ -137,12 +130,11 @@ public class SpotifyApiService
       LOGGER.info("Skipping getting top artists");
       return;
     }
-    spotifyApi.getUsersTopArtists().limit(50).offset(0).time_range(LONG_TERM.getValue());
+    GetUsersTopArtistsRequest request = spotifyApi.getUsersTopArtists().limit(50).offset(0).time_range(LONG_TERM.getValue()).build();
 
   }
 
   @Scheduled(fixedDelay = 600000)
-
   public void getPlayHistory()
   {
     if (!isLoggedIn())
@@ -153,81 +145,79 @@ public class SpotifyApiService
     LOGGER.info("getting play history");
 
     GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
-    request.executeAsync().thenAccept(this::savePlayHistory);
+    //    request.executeAsync().thenAccept(this::savePlayHistory);
   }
 
-  private void savePlayHistory(PagingCursorbased<PlayHistory> history)
-  {
-    LOGGER.info("Got play history");
-
-    long oldestTime = Long.MAX_VALUE;
-    for (PlayHistory item : history.getItems())
-    {
-      var track = item.getTrack();
-      long timePlayed = item.getPlayedAt().getTime();
-      Optional<PlayEntity> play = playRepository.findById(timePlayed);
-
-      if (timePlayed < oldestTime)
-      {
-        // subtract 1 because we don't want this item to come up again in the search
-        oldestTime = timePlayed - 1;
-      }
-
-      // if it already exists move on
-      // or if this is not a track - could be a podcast episode
-      if (play.isPresent() || item.getTrack().getType() != ModelObjectType.TRACK)
-      {
-        //if there is one item in there then it follows that the rest should be there
-        LOGGER.info("Skipping song at time {}", timePlayed);
-        continue;
-      }
-
-      String trackId = track.getId();
-      String trackName = track.getName();
-      long songLength = track.getDurationMs();
-
-      // save data to postgres
-      PlayEntity pgPlayEntity = new PlayEntity();
-      Set<ArtistEntity> artistEntities = new HashSet<>();
-
-      for (ArtistSimplified trackArtist : track.getArtists())
-      {
-        String artistId = trackArtist.getId();
-        Optional<ArtistEntity> optionalArtist = artistRepository.findByArtistId(artistId);
-        if (optionalArtist.isPresent())
-        {
-          artistEntities.add(optionalArtist.get());
-        }
-        else
-        {
-          ArtistEntity pgArtistEntity = new ArtistEntity();
-          pgArtistEntity.setArtistId(artistId).setArtistName(trackArtist.getName());
-          artistEntities.add(pgArtistEntity);
-        }
-      }
-
-      pgPlayEntity.setId(timePlayed)
-          .setTrackId(trackId)
-          .setTrackName(trackName)
-          .setSongLength(songLength)
-          .setArtists(artistEntities);
-      playRepository.save(pgPlayEntity);
-    }
-
-    if (history.getNext() != null)
-    {
-      String nextUrl = history.getNext();
-      // have another page of results to get (at least)
-      LOGGER.info("more results to get {}", nextUrl);
-
-      LOGGER.info("Calling again with before value of {}", oldestTime);
-      GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks()
-          .limit(50)
-          .before(new Date(oldestTime))
-          .build();
-      request.executeAsync().thenAccept(this::savePlayHistory);
-    }
-  }
+  //  private void savePlayHistory(PagingCursorbased<PlayHistory> history)
+  //  {
+  //    LOGGER.info("Got play history");
+  //
+  //    long oldestTime = Long.MAX_VALUE;
+  //    for (PlayHistory item : history.getItems())
+  //    {
+  //      TrackSimplified track = item.getTrack();
+  //      long timePlayed = item.getPlayedAt().getTime();
+  //      Optional<PlayEntity> play = playRepository.findById(timePlayed);
+  //
+  //      if (timePlayed < oldestTime)
+  //      {
+  //        // subtract 1 because we don't want this item to come up again in the search
+  //        oldestTime = timePlayed - 1;
+  //      }
+  //
+  //      // if it already exists move on
+  //      // or if this is not a track - could be a podcast episode
+  //      if (play.isPresent() || item.getTrack().getType() != ModelObjectType.TRACK)
+  //      {
+  //        //if there is one item in there then it follows that the rest should be there
+  //        LOGGER.info("Skipping song at time {}", timePlayed);
+  //        continue;
+  //      }
+  //
+  //      String trackId = track.getId();
+  //      String trackName = track.getName();
+  //      long songLength = track.getDurationMs();
+  //
+  //      // save data to postgres
+  //      Set<ArtistEntity> artistEntities = new HashSet<>();
+  //
+  //      for (ArtistSimplified trackArtist : track.getArtists())
+  //      {
+  //        String artistId = trackArtist.getId();
+  //        Optional<ArtistEntity> optionalArtist = artistRepository.findByArtistId(artistId);
+  //        if (optionalArtist.isPresent())
+  //        {
+  //          artistEntities.add(optionalArtist.get());
+  //        }
+  //        else
+  //        {
+  //          ArtistEntity pgArtistEntity = ArtistEntity.builder().artistId(artistId).artistName(trackArtist.getName()).build();
+  //          artistEntities.add(pgArtistEntity);
+  //        }
+  //      }
+  //
+  //      PlayEntity pgPlayEntity = PlayEntity.builder().id(timePlayed)
+  //          .trackId(trackId)
+  //          .trackName(trackName)
+  //          .songLength(songLength)
+  //          .artists(artistEntities).build();
+  //      playRepository.save(pgPlayEntity);
+  //    }
+  //
+  //    if (history.getNext() != null)
+  //    {
+  //      String nextUrl = history.getNext();
+  //      // have another page of results to get (at least)
+  //      LOGGER.info("more results to get {}", nextUrl);
+  //
+  //      LOGGER.info("Calling again with before value of {}", oldestTime);
+  //      GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks()
+  //          .limit(50)
+  //          .before(new Date(oldestTime))
+  //          .build();
+  //      request.executeAsync().thenAccept(this::savePlayHistory);
+  //    }
+  //  }
 
   public void createPlaylistWithNameAndTracks(String name,
                                               Set<String> trackIds) throws IOException, ParseException, SpotifyWebApiException
