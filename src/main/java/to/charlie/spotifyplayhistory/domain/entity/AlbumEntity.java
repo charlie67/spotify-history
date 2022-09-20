@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity(name = "album")
+@Entity
 @Table(name = "album", schema = "public")
 @Getter
 @Setter

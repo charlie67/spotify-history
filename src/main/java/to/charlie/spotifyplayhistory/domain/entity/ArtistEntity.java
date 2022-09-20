@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity(name = "artist")
+@Entity
 @Table(name = "artist", schema = "public")
 @Getter
 @Setter
