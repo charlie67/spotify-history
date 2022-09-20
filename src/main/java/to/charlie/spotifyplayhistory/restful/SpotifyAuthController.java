@@ -21,10 +21,10 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-import to.charlie.spotifyplayhistory.SpotifyApiService;
 import to.charlie.spotifyplayhistory.config.SpotifyProperties;
 import to.charlie.spotifyplayhistory.domain.entity.Token;
 import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
+import to.charlie.spotifyplayhistory.domain.service.SpotifyApiService;
 
 
 @RestController
@@ -61,17 +61,17 @@ public class SpotifyAuthController
     return authorizationCodeUriRequest.execute().toString();
   }
 
-  @GetMapping("/loginMessage")
+  @GetMapping("/loginState")
   @ResponseBody
   @CrossOrigin(origins = "*")
-  public ResponseEntity<String> getLoginMessage()
+  public ResponseEntity<Boolean> getLoginMessage()
   {
-    if (spotifyApiService.areLoggedIn())
+    if (spotifyApiService.isLoggedIn())
     {
-      return ResponseEntity.ok("Already logged in. Click here to login to a different account.");
+      return ResponseEntity.ok(true);
     }
 
-    return ResponseEntity.ok("Please login with Spotify to get started!");
+    return ResponseEntity.ok(false);
   }
 
   @GetMapping("/get-user-code")

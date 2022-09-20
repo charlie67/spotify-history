@@ -1,4 +1,6 @@
-package to.charlie.spotifyplayhistory;
+package to.charlie.spotifyplayhistory.domain.service;
+
+import static to.charlie.spotifyplayhistory.domain.TopTimeRangeEnum.LONG_TERM;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
@@ -28,14 +32,18 @@ import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PagingCursorbased;
 import se.michaelthelin.spotify.model_objects.specification.PlayHistory;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
+import se.michaelthelin.spotify.model_objects.specification.TrackSimplified;
 import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
+import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
 import se.michaelthelin.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
+import to.charlie.spotifyplayhistory.config.FlywayMigrator;
 import to.charlie.spotifyplayhistory.config.SpotifyProperties;
-import to.charlie.spotifyplayhistory.domain.entity.Artist;
-import to.charlie.spotifyplayhistory.domain.entity.Play;
+import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
+import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 import to.charlie.spotifyplayhistory.domain.entity.Token;
 import to.charlie.spotifyplayhistory.domain.repository.ArtistRepository;
+import to.charlie.spotifyplayhistory.domain.repository.MigrationRepository;
 import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
 import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
 
@@ -45,19 +53,27 @@ public class SpotifyApiService
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyApiService.class);
 
+  private final FlywayMigrator flywayMigrator;
+
   public SpotifyApi spotifyApi;
 
   private final PlayRepository playRepository;
 
   private final ArtistRepository artistRepository;
 
+  private final MigrationRepository migrationRepository;
+
   public SpotifyApiService(PlayRepository playRepository,
                            ArtistRepository artistRepository,
                            SpotifyProperties spotifyProperties,
-                           TokenRepository tokenRepository) throws URISyntaxException
+                           TokenRepository tokenRepository,
+                           FlywayMigrator flywayMigrator,
+                           MigrationRepository migrationRepository) throws URISyntaxException
   {
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
+    this.flywayMigrator = flywayMigrator;
+    this.migrationRepository = migrationRepository;
 
     Optional<Token> token = tokenRepository.findById(1);
     token.ifPresent(value -> {
@@ -96,7 +112,15 @@ public class SpotifyApiService
     }
   }
 
-  // todo start this after the token has been set by the controller
+  @PostConstruct
+  public void migrate() throws InterruptedException
+  {
+    if (!migrationRepository.existsByIdAndCompleteTrue("V2"))
+    {
+      flywayMigrator.migrateV1ToV2(spotifyApi);
+    }
+  }
+
   @Scheduled(fixedDelay = 1000000)
   public void refreshAuthCode()
   {
@@ -123,15 +147,26 @@ public class SpotifyApiService
     LOGGER.info("Refreshed token expires in: {}", authorizationCodeCredentials.getExpiresIn());
   }
 
-  public boolean areLoggedIn()
+  public boolean isLoggedIn()
   {
     return StringUtils.hasText(spotifyApi.getAccessToken());
+  }
+
+  public void getTopArtists()
+  {
+    if (!isLoggedIn())
+    {
+      LOGGER.info("Skipping getting top artists");
+      return;
+    }
+    GetUsersTopArtistsRequest request = spotifyApi.getUsersTopArtists().limit(50).offset(0).time_range(LONG_TERM.getValue()).build();
+
   }
 
   @Scheduled(fixedDelay = 600000)
   public void getPlayHistory()
   {
-    if (!StringUtils.hasText(spotifyApi.getAccessToken()))
+    if (!isLoggedIn())
     {
       LOGGER.info("Skipping getting play history");
       return;
@@ -139,7 +174,7 @@ public class SpotifyApiService
     LOGGER.info("getting play history");
 
     GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
-    request.executeAsync().thenAccept(this::savePlayHistory);
+    //    request.executeAsync().thenAccept(this::savePlayHistory);
   }
 
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
@@ -149,9 +184,9 @@ public class SpotifyApiService
     long oldestTime = Long.MAX_VALUE;
     for (PlayHistory item : history.getItems())
     {
-      var track = item.getTrack();
+      TrackSimplified track = item.getTrack();
       long timePlayed = item.getPlayedAt().getTime();
-      Optional<Play> play = playRepository.findById(timePlayed);
+      Optional<PlayEntity> play = playRepository.findById(timePlayed);
 
       if (timePlayed < oldestTime)
       {
@@ -173,31 +208,27 @@ public class SpotifyApiService
       long songLength = track.getDurationMs();
 
       // save data to postgres
-      Play pgPlay = new Play();
-      Set<Artist> artists = new HashSet<>();
+      Set<ArtistEntity> artistEntities = new HashSet<>();
 
       for (ArtistSimplified trackArtist : track.getArtists())
       {
         String artistId = trackArtist.getId();
-        Optional<Artist> optionalArtist = artistRepository.findByArtistId(artistId);
+        Optional<ArtistEntity> optionalArtist = artistRepository.findById(artistId);
         if (optionalArtist.isPresent())
         {
-          artists.add(optionalArtist.get());
+          artistEntities.add(optionalArtist.get());
         }
         else
         {
-          Artist pgArtist = new Artist();
-          pgArtist.setArtistId(artistId).setArtistName(trackArtist.getName());
-          artists.add(pgArtist);
+          ArtistEntity artistEntity = ArtistEntity.builder().id(artistId).name(trackArtist.getName()).build();
+          artistEntities.add(artistEntity);
         }
       }
 
-      pgPlay.setId(timePlayed)
-          .setTrackId(trackId)
-          .setTrackName(trackName)
-          .setSongLength(songLength)
-          .setArtists(artists);
-      playRepository.save(pgPlay);
+      PlayEntity playEntity = PlayEntity.builder().id(timePlayed)
+          .trackId(trackId)
+          .build();
+      playRepository.save(playEntity);
     }
 
     if (history.getNext() != null)

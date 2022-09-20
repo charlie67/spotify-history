@@ -35,4 +35,5 @@ out/
 
 ### VS Code ###
 .vscode/
+./docker/docker_data/
 /target/
