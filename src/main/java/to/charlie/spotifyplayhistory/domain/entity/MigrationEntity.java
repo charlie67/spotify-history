@@ -1,12 +1,9 @@
 package to.charlie.spotifyplayhistory.domain.entity;
 
-import java.util.UUID;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,19 +12,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity(name = "genre")
+@Entity(name = "migration")
+@Table(name = "migration", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GenreEntity
+public class MigrationEntity
 {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  @Column(name = "id", nullable = false)
-  private UUID id;
+  @Column(name = "id")
+  public String id;
 
-  @Column(name = "genre")
-  private String genre;
+  @Column(name = "complete")
+  public boolean complete;
 }

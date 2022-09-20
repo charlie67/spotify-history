@@ -5,6 +5,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +15,7 @@ import lombok.Setter;
 
 
 @Entity(name = "artist")
+@Table(name = "artist", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,15 +23,12 @@ import lombok.Setter;
 @Builder
 public class ArtistEntity
 {
-  @Column(name = "name")
-  private String name;
-
   @Id
   @Column(name = "id")
   private String id;
 
-  @Column(name = "json")
-  private String rawJson;
+  @Column(name = "name")
+  private String name;
 
   @Override
   public boolean equals(Object o)
@@ -43,13 +42,12 @@ public class ArtistEntity
       return false;
     }
     ArtistEntity that = (ArtistEntity) o;
-    return Objects.equals(name, that.name) && Objects.equals(id, that.id) && Objects.equals(rawJson,
-                                                                                            that.rawJson);
+    return Objects.equals(name, that.name) && Objects.equals(id, that.id);
   }
 
   @Override
   public int hashCode()
   {
-    return Objects.hash(name, id, rawJson);
+    return Objects.hash(name, id);
   }
 }

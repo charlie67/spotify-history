@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +21,7 @@ import lombok.Setter;
 
 
 @Entity(name = "album")
+@Table(name = "album", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,13 +39,12 @@ public class AlbumEntity
   @Column(name = "name")
   private String name;
 
-  @Column(name = "json")
-  private String rawJson;
-
   @ManyToMany(cascade = CascadeType.PERSIST)
   @JoinTable(name = "artist_albums",
       joinColumns = @JoinColumn(name = "album_id"),
       inverseJoinColumns = @JoinColumn(name = "artist_id"))
   private Set<ArtistEntity> artists = new LinkedHashSet<>();
 
+  @OneToMany(mappedBy = "album")
+  private Set<TrackEntity> tracks = new LinkedHashSet<>();
 }

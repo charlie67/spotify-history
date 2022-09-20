@@ -1,11 +1,9 @@
 package to.charlie.spotifyplayhistory.domain.entity;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +12,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity
+@Entity(name = "play")
+@Table(name = "play", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,7 +26,10 @@ public class PlayEntity
   @Column(name = "id")
   private long id;
 
-  @OneToOne(cascade = CascadeType.ALL, optional = false)
-  @JoinColumn(name = "track_id")
-  private TrackEntity trackEntity;
+  //  @OneToOne(cascade = CascadeType.ALL, optional = false)
+  //  @JoinColumn(name = "track_id")
+  //  private TrackEntity trackEntity;
+
+  @Column(name = "track_id")
+  private String trackId;
 }

@@ -5,3 +5,5 @@ explored later using a Grafana dashboard.
 
 To restore DB dump:\
 psql -U spotify spotify < /tmp/spotify_dump.sql
+
+ALTER TABLE play ADD CONSTRAINT FK_PLAYENTITY_ON_TRACK FOREIGN KEY (track_id) REFERENCES track (id);

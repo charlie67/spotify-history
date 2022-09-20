@@ -1,6 +1,6 @@
 package to.charlie.spotifyplayhistory.domain.entity;
 
-import java.util.Objects;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -11,8 +11,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-
-import org.hibernate.Hibernate;
+import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +21,7 @@ import lombok.Setter;
 
 
 @Entity(name = "track")
+@Table(name = "track", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,7 +32,7 @@ public class TrackEntity
   // same as the id from spotify
   @Id
   @Column(name = "id", nullable = false)
-  private String trackId;
+  private String id;
 
   @Column(name = "name")
   private String trackName;
@@ -43,38 +43,13 @@ public class TrackEntity
   @Column(name = "popularity")
   private int popularity;
 
-  @ManyToMany(cascade = CascadeType.ALL)
-  @JoinTable(
-      name = "play_artist",
-      joinColumns = @JoinColumn(name = "play_id"),
-      inverseJoinColumns = @JoinColumn(name = "artist_id"))
-  private Set<ArtistEntity> artists;
+  @ManyToMany(cascade = CascadeType.PERSIST)
+  @JoinTable(name = "track_artists",
+      joinColumns = @JoinColumn(name = "track_id"),
+      inverseJoinColumns = @JoinColumn(name = "artists_id"))
+  private Set<ArtistEntity> artists = new LinkedHashSet<>();
 
-  @ManyToOne
-  @JoinColumn(name = "album_entity_id")
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "album_id")
   private AlbumEntity album;
-
-  @Column(name = "json")
-  private String rawJson;
-
-  @Override
-  public boolean equals(Object o)
-  {
-    if (this == o)
-    {
-      return true;
-    }
-    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o))
-    {
-      return false;
-    }
-    TrackEntity that = (TrackEntity) o;
-    return trackId != null && Objects.equals(trackId, that.trackId);
-  }
-
-  @Override
-  public int hashCode()
-  {
-    return getClass().hashCode();
-  }
 }
