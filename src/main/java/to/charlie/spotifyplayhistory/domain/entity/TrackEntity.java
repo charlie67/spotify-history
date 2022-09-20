@@ -19,8 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-@Entity(name = "track")
+@Entity
 @Table(name = "track", schema = "public")
 @Getter
 @Setter

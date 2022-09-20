@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Entity(name = "migration")
+@Entity
 @Table(name = "migration", schema = "public")
 @Getter
 @Setter
