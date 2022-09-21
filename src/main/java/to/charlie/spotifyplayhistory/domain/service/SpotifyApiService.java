@@ -174,7 +174,7 @@ public class SpotifyApiService
     LOGGER.info("getting play history");
 
     GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
-    //    request.executeAsync().thenAccept(this::savePlayHistory);
+    request.executeAsync().thenAccept(this::savePlayHistory);
   }
 
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
