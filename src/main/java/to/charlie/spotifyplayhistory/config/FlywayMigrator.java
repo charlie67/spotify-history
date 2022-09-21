@@ -110,13 +110,32 @@ public class FlywayMigrator
         artistsForSong.add(artistEntity);
       }
       AlbumSimplified albumSimplified = track.getAlbum();
+      ArtistSimplified[] albumArtists = (albumSimplified.getArtists());
+      Set<ArtistEntity> artistsForAlbum = new HashSet<>();
+
+      for (ArtistSimplified albumArtist : albumArtists)
+      {
+        Optional<ArtistEntity> optionalArtist = artistRepository.findById(albumArtist.getId());
+        ArtistEntity artistEntity;
+        if (optionalArtist.isEmpty())
+        {
+          artistEntity = ArtistEntity.builder().name(albumArtist.getName()).id(albumArtist.getId()).build();
+          artistRepository.save(artistEntity);
+        }
+        else
+        {
+          artistEntity = optionalArtist.get();
+        }
+
+        artistsForAlbum.add(artistEntity);
+      }
 
       // album and genre information
       AlbumEntity album = AlbumEntity.builder()
           .id(albumSimplified.getId())
           .name(albumSimplified.getName())
           .type(albumSimplified.getAlbumType().getType())
-          .build();
+          .artists(artistsForAlbum).build();
 
       TrackEntity trackEntity = TrackEntity.builder()
           .trackName(track.getName())
