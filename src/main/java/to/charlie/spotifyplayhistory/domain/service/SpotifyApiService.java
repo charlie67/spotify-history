@@ -174,7 +174,7 @@ public class SpotifyApiService
     LOGGER.info("getting play history");
 
     GetCurrentUsersRecentlyPlayedTracksRequest request = spotifyApi.getCurrentUsersRecentlyPlayedTracks().limit(50).build();
-    //    request.executeAsync().thenAccept(this::savePlayHistory);
+    request.executeAsync().thenAccept(this::savePlayHistory);
   }
 
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
@@ -204,8 +204,6 @@ public class SpotifyApiService
       }
 
       String trackId = track.getId();
-      String trackName = track.getName();
-      long songLength = track.getDurationMs();
 
       // save data to postgres
       Set<ArtistEntity> artistEntities = new HashSet<>();
