@@ -42,10 +42,12 @@ import to.charlie.spotifyplayhistory.config.SpotifyProperties;
 import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
 import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 import to.charlie.spotifyplayhistory.domain.entity.Token;
+import to.charlie.spotifyplayhistory.domain.entity.TrackEntity;
 import to.charlie.spotifyplayhistory.domain.repository.ArtistRepository;
 import to.charlie.spotifyplayhistory.domain.repository.MigrationRepository;
 import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
 import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
+import to.charlie.spotifyplayhistory.domain.repository.TrackRepository;
 
 
 @Service
@@ -63,17 +65,21 @@ public class SpotifyApiService
 
   private final MigrationRepository migrationRepository;
 
+  private final TrackRepository trackRepository;
+
   public SpotifyApiService(PlayRepository playRepository,
                            ArtistRepository artistRepository,
                            SpotifyProperties spotifyProperties,
                            TokenRepository tokenRepository,
                            FlywayMigrator flywayMigrator,
-                           MigrationRepository migrationRepository) throws URISyntaxException
+                           MigrationRepository migrationRepository,
+                           TrackRepository trackRepository) throws URISyntaxException
   {
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
     this.flywayMigrator = flywayMigrator;
     this.migrationRepository = migrationRepository;
+    this.trackRepository = trackRepository;
 
     Optional<Token> token = tokenRepository.findById(1);
     token.ifPresent(value -> {
@@ -221,6 +227,24 @@ public class SpotifyApiService
           ArtistEntity artistEntity = ArtistEntity.builder().id(artistId).name(trackArtist.getName()).build();
           artistEntities.add(artistEntity);
         }
+      }
+
+      Optional<TrackEntity> optionalTrack = trackRepository.findById(trackId);
+      TrackEntity trackEntity;
+      if (optionalTrack.isPresent())
+      {
+        trackEntity = optionalTrack.get();
+      }
+      else
+      {
+        trackEntity = TrackEntity.builder()
+            .id(trackId)
+            .trackName(track.getName())
+            .popularity(-1)
+            .songLength(track.getDurationMs())
+            .artists(artistEntities)
+            .build();
+        trackRepository.save(trackEntity);
       }
 
       PlayEntity playEntity = PlayEntity.builder().id(timePlayed)
