@@ -28,10 +28,12 @@ import se.michaelthelin.spotify.enums.ModelObjectType;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
+import se.michaelthelin.spotify.model_objects.specification.AlbumSimplified;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PagingCursorbased;
 import se.michaelthelin.spotify.model_objects.specification.PlayHistory;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.TrackSimplified;
 import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
@@ -39,10 +41,12 @@ import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUser
 import se.michaelthelin.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
 import to.charlie.spotifyplayhistory.config.FlywayMigrator;
 import to.charlie.spotifyplayhistory.config.SpotifyProperties;
+import to.charlie.spotifyplayhistory.domain.entity.AlbumEntity;
 import to.charlie.spotifyplayhistory.domain.entity.ArtistEntity;
 import to.charlie.spotifyplayhistory.domain.entity.PlayEntity;
 import to.charlie.spotifyplayhistory.domain.entity.Token;
 import to.charlie.spotifyplayhistory.domain.entity.TrackEntity;
+import to.charlie.spotifyplayhistory.domain.repository.AlbumRepository;
 import to.charlie.spotifyplayhistory.domain.repository.ArtistRepository;
 import to.charlie.spotifyplayhistory.domain.repository.MigrationRepository;
 import to.charlie.spotifyplayhistory.domain.repository.PlayRepository;
@@ -67,19 +71,23 @@ public class SpotifyApiService
 
   private final TrackRepository trackRepository;
 
+  private final AlbumRepository albumRepository;
+
   public SpotifyApiService(PlayRepository playRepository,
                            ArtistRepository artistRepository,
                            SpotifyProperties spotifyProperties,
                            TokenRepository tokenRepository,
                            FlywayMigrator flywayMigrator,
                            MigrationRepository migrationRepository,
-                           TrackRepository trackRepository) throws URISyntaxException
+                           TrackRepository trackRepository,
+                           AlbumRepository albumRepository) throws URISyntaxException
   {
     this.playRepository = playRepository;
     this.artistRepository = artistRepository;
     this.flywayMigrator = flywayMigrator;
     this.migrationRepository = migrationRepository;
     this.trackRepository = trackRepository;
+    this.albumRepository = albumRepository;
 
     Optional<Token> token = tokenRepository.findById(1);
     token.ifPresent(value -> {
@@ -185,13 +193,14 @@ public class SpotifyApiService
 
   private void savePlayHistory(PagingCursorbased<PlayHistory> history)
   {
-    LOGGER.info("Got play history");
+    LOGGER.info("Got play history {} items", history.getItems().length);
 
     long oldestTime = Long.MAX_VALUE;
     for (PlayHistory item : history.getItems())
     {
-      TrackSimplified track = item.getTrack();
       long timePlayed = item.getPlayedAt().getTime();
+      TrackSimplified trackSimple = item.getTrack();
+      LOGGER.info("Checking item {} at time {}", trackSimple.getName(), timePlayed);
       Optional<PlayEntity> play = playRepository.findById(timePlayed);
 
       if (timePlayed < oldestTime)
@@ -205,11 +214,21 @@ public class SpotifyApiService
       if (play.isPresent() || item.getTrack().getType() != ModelObjectType.TRACK)
       {
         //if there is one item in there then it follows that the rest should be there
-        LOGGER.info("Skipping song at time {}", timePlayed);
+        LOGGER.info("Skipping song at time {} name {}", timePlayed, trackSimple.getName());
         continue;
       }
 
-      String trackId = track.getId();
+      String trackId = trackSimple.getId();
+      Track track;
+      try
+      {
+        track = spotifyApi.getTrack(trackId).build().execute();
+      }
+      catch (IOException | SpotifyWebApiException | ParseException e)
+      {
+        LOGGER.error("Error getting full track info", e);
+        return;
+      }
 
       // save data to postgres
       Set<ArtistEntity> artistEntities = new HashSet<>();
@@ -226,7 +245,47 @@ public class SpotifyApiService
         {
           ArtistEntity artistEntity = ArtistEntity.builder().id(artistId).name(trackArtist.getName()).build();
           artistEntities.add(artistEntity);
+          artistRepository.save(artistEntity);
         }
+      }
+
+      AlbumSimplified album = track.getAlbum();
+      String albumId = album.getId();
+      Optional<AlbumEntity> optionalAlbum = albumRepository.findById(albumId);
+      AlbumEntity albumEntity;
+      if (optionalAlbum.isPresent())
+      {
+        albumEntity = optionalAlbum.get();
+      }
+      else
+      {
+        ArtistSimplified[] albumArtists = (album.getArtists());
+        Set<ArtistEntity> artistsForAlbum = new HashSet<>();
+
+        for (ArtistSimplified albumArtist : albumArtists)
+        {
+          Optional<ArtistEntity> optionalArtist = artistRepository.findById(albumArtist.getId());
+          ArtistEntity artistEntity;
+          if (optionalArtist.isEmpty())
+          {
+            artistEntity = ArtistEntity.builder().name(albumArtist.getName()).id(albumArtist.getId()).build();
+            artistRepository.save(artistEntity);
+          }
+          else
+          {
+            artistEntity = optionalArtist.get();
+          }
+
+          artistsForAlbum.add(artistEntity);
+        }
+
+        albumEntity = AlbumEntity.builder()
+            .id(albumId)
+            .name(album.getName())
+            .artists(artistsForAlbum)
+            .type(album.getAlbumType().type)
+            .build();
+        albumRepository.save(albumEntity);
       }
 
       Optional<TrackEntity> optionalTrack = trackRepository.findById(trackId);
@@ -239,10 +298,11 @@ public class SpotifyApiService
       {
         trackEntity = TrackEntity.builder()
             .id(trackId)
-            .trackName(track.getName())
-            .popularity(-1)
-            .songLength(track.getDurationMs())
+            .trackName(trackSimple.getName())
+            .popularity(track.getPopularity())
+            .songLength(trackSimple.getDurationMs())
             .artists(artistEntities)
+            .album(albumEntity)
             .build();
         trackRepository.save(trackEntity);
       }
@@ -251,6 +311,7 @@ public class SpotifyApiService
           .trackId(trackId)
           .build();
       playRepository.save(playEntity);
+      LOGGER.info("Saved new play at time {} name {}", timePlayed, trackSimple.getName());
     }
 
     if (history.getNext() != null)
