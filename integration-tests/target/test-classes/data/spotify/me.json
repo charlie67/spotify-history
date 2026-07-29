@@ -1,0 +1,10 @@
+{
+  "id": "user-one",
+  "display_name": "Test User",
+  "type": "user",
+  "uri": "spotify:user:user-one",
+  "href": "https://api.spotify.com/v1/users/user-one",
+  "external_urls": {
+    "spotify": "https://open.spotify.com/user/user-one"
+  }
+}

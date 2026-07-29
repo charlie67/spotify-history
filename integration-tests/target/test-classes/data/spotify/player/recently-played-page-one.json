@@ -1,0 +1,49 @@
+{
+  "href": "https://api.spotify.com/v1/me/player/recently-played?limit=50",
+  "limit": 50,
+  "next": "https://api.spotify.com/v1/me/player/recently-played?before=1705316399999&limit=50",
+  "cursors": {
+    "after": "1705320000000",
+    "before": "1705316400000"
+  },
+  "items": [
+    {
+      "played_at": "2024-01-15T11:00:00.000Z",
+      "context": null,
+      "track": {
+        "id": "track-two",
+        "name": "Second Song",
+        "type": "track",
+        "uri": "spotify:track:track-two",
+        "duration_ms": 210000,
+        "artists": [
+          {
+            "id": "artist-two",
+            "name": "Another Band",
+            "type": "artist",
+            "uri": "spotify:artist:artist-two"
+          }
+        ]
+      }
+    },
+    {
+      "played_at": "2024-01-15T12:00:00.000Z",
+      "context": null,
+      "track": {
+        "id": "track-three",
+        "name": "Third Song",
+        "type": "track",
+        "uri": "spotify:track:track-three",
+        "duration_ms": 240000,
+        "artists": [
+          {
+            "id": "artist-one",
+            "name": "The Band",
+            "type": "artist",
+            "uri": "spotify:artist:artist-one"
+          }
+        ]
+      }
+    }
+  ]
+}

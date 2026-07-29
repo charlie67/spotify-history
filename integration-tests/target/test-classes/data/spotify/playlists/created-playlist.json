@@ -1,0 +1,23 @@
+{
+  "id": "playlist-one",
+  "name": "Top Tracks",
+  "type": "playlist",
+  "uri": "spotify:playlist:playlist-one",
+  "href": "https://api.spotify.com/v1/playlists/playlist-one",
+  "collaborative": false,
+  "public": true,
+  "snapshot_id": "snapshot-one",
+  "owner": {
+    "id": "user-one",
+    "display_name": "Test User",
+    "type": "user",
+    "uri": "spotify:user:user-one"
+  },
+  "tracks": {
+    "href": "https://api.spotify.com/v1/playlists/playlist-one/tracks",
+    "total": 0,
+    "limit": 100,
+    "offset": 0,
+    "items": []
+  }
+}
