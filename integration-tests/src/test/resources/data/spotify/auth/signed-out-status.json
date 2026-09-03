@@ -1,0 +1,6 @@
+{
+  "loggedIn": false,
+  "reauthorisationRequired": false,
+  "refreshTokenIssuedAt": null,
+  "refreshTokenExpiresAt": null
+}

@@ -37,16 +37,31 @@
     };
 
     function areLoggedIn() {
-        fetch("/api/loginState")
-            .then((response) => response.text())
-            .then(response => {
-                console.log(response)
-                if (response) {
-                    $("#header-message").text("Already logged in. Click here to login to a different account.");
+        fetch("/api/authStatus")
+            .then((response) => response.json())
+            .then(status => {
+                console.log(status)
+                // A refresh token Spotify has rejected has already been thrown away, so the only way
+                // back is signing in again - say so rather than leaving the user to work out why the
+                // history stopped.
+                if (status.reauthorisationRequired) {
+                    $("#header-message").text("Your Spotify sign in has expired. Please sign in again to carry on recording.");
+                } else if (status.loggedIn) {
+                    $("#header-message").text("Already logged in. Click here to login to a different account." + expiryMessage(status));
                 } else {
                     $("#header-message").text("Please login with Spotify to get started!");
                 }
             })
+    }
+
+    // Spotify sign ins last six months. Showing the date gives some warning before the recording
+    // stops, instead of it only turning up in the logs.
+    function expiryMessage(status) {
+        if (!status.refreshTokenExpiresAt) {
+            return "";
+        }
+
+        return " This sign in expires on " + new Date(status.refreshTokenExpiresAt).toLocaleDateString() + ".";
     }
 
     function LandingPage() {

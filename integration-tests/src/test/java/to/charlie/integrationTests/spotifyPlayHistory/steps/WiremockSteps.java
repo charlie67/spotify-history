@@ -71,6 +71,20 @@ public class WiremockSteps {
 		log.info("Stubbed POST URL: {} with data from {}", url, bodyFile);
 	}
 
+	@Given("the POST URL {string} is set to return status {int} with the JSON from file {string}")
+	public void postUrlIsSetToReturnStatusWithTheJsonFromFile(final String url, final int status,
+					final String bodyFile) {
+		final String content = loader.loadData(bodyFile);
+
+		wireMockClient.register(post(urlEqualTo(url))
+						.willReturn(aResponse()
+										.withStatus(status)
+										.withHeader("Content-Type", "application/json")
+										.withBody(content)));
+
+		log.info("Stubbed POST URL: {} with status {} and data from {}", url, status, bodyFile);
+	}
+
 	@Given("the POST URL {string} is set to return status {int}")
 	public void postUrlIsSetToReturnStatus(final String url, final int status) {
 		wireMockClient.register(post(urlEqualTo(url))

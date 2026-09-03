@@ -1,0 +1,7 @@
+{
+  "access_token": "rotated-access-token",
+  "token_type": "Bearer",
+  "scope": "user-read-recently-played playlist-modify-public playlist-modify-private",
+  "expires_in": 3600,
+  "refresh_token": "rotated-refresh-token"
+}

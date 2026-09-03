@@ -7,6 +7,7 @@ import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +20,6 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-import to.charlie.spotifyplayhistory.config.SpotifyApiFactory;
-import to.charlie.spotifyplayhistory.domain.entity.Token;
-import to.charlie.spotifyplayhistory.domain.repository.TokenRepository;
 import to.charlie.spotifyplayhistory.domain.service.SpotifyApiService;
 
 
@@ -33,18 +31,10 @@ public class SpotifyAuthController
 
   private final SpotifyApiService spotifyApiService;
 
-  private final TokenRepository tokenRepository;
-
-  private final SpotifyApiFactory spotifyApiFactory;
-
   @Autowired
-  public SpotifyAuthController(SpotifyApiService spotifyApiService,
-                               TokenRepository tokenRepository,
-                               SpotifyApiFactory spotifyApiFactory)
+  public SpotifyAuthController(SpotifyApiService spotifyApiService)
   {
     this.spotifyApiService = spotifyApiService;
-    this.tokenRepository = tokenRepository;
-    this.spotifyApiFactory = spotifyApiFactory;
   }
 
   @GetMapping("/login")
@@ -72,6 +62,21 @@ public class SpotifyAuthController
     return ResponseEntity.ok(false);
   }
 
+  /**
+   * The fuller picture behind {@code /loginState}: whether the stored refresh token was rejected
+   * and has been thrown away, and when the one now held runs out.
+   */
+  @GetMapping("/authStatus")
+  @ResponseBody
+  @CrossOrigin(origins = "*")
+  public ResponseEntity<AuthStatus> getAuthStatus()
+  {
+    return ResponseEntity.ok(new AuthStatus(spotifyApiService.isLoggedIn(),
+        spotifyApiService.isReauthorisationRequired(),
+        spotifyApiService.refreshTokenIssuedAt().orElse(null),
+        spotifyApiService.refreshTokenExpiresAt().orElse(null)));
+  }
+
   @GetMapping("/get-user-code")
   public ResponseEntity<String> getSpotifyUserCode(@RequestParam("code") String userCode)
   {
@@ -81,28 +86,20 @@ public class SpotifyAuthController
     {
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeRequest.execute();
 
-      String refreshToken = authorizationCodeCredentials.getRefreshToken();
+      spotifyApiService.onAuthorisationCodeExchanged(authorizationCodeCredentials);
 
-      spotifyApiService.spotifyApi = spotifyApiFactory.builder()
-          .setAccessToken(authorizationCodeCredentials.getAccessToken())
-          .setRefreshToken(refreshToken)
-          .build();
+      LOGGER.info("Signed in, access token expires in: {}", authorizationCodeCredentials.getExpiresIn());
 
-      spotifyApiService.spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-
-      Token token = new Token();
-      token.setRefreshToken(refreshToken);
-      // hard code this for now
-      token.setId(1);
-      tokenRepository.save(token);
-
-      LOGGER.info("Refresh credentials expire in: {}", authorizationCodeCredentials.getExpiresIn());
+      return ResponseEntity.ok("Auth successful");
     }
     catch (ParseException | IOException | SpotifyWebApiException | URISyntaxException e)
     {
+      // Saying "Auth successful" here used to leave the user looking at a page that claimed they
+      // were signed in while the application was still signed out, which matters far more now that
+      // an expired token sends them back through this flow.
       LOGGER.error("Error in authentication", e);
-    }
 
-    return ResponseEntity.ok("Auth successful");
+      return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("Auth failed, please try signing in again");
+    }
   }
 }
