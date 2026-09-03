@@ -2,11 +2,9 @@ package to.charlie.integrationTests.spotifyPlayHistory.steps;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import to.charlie.integrationTests.spotifyPlayHistory.WireMockContainer;
-import to.charlie.spotifyplayhistory.config.SpotifyApiFactory;
 import to.charlie.spotifyplayhistory.domain.service.SpotifyApiService;
 
 public class Hooks {
@@ -16,9 +14,6 @@ public class Hooks {
 
     @Autowired
     private SpotifyApiService spotifyApiService;
-
-    @Autowired
-    private SpotifyApiFactory spotifyApiFactory;
 
     @Before
     public void resetWireMock() {
@@ -38,11 +33,11 @@ public class Hooks {
     /**
      * The Spring context is shared by the whole run, and SpotifyApiService holds its SpotifyApi -
      * including any access token - in a field. Without this the token an authentication scenario
-     * obtains would leak into every scenario that follows and quietly make them "logged in".
+     * obtains would leak into every scenario that follows and quietly make them "logged in", and a
+     * scenario that got its token rejected would leave the reauthorisation flag set behind it.
      */
     @After
-    @SneakyThrows
     public void resetSpotifyApi() {
-        spotifyApiService.spotifyApi = spotifyApiFactory.builder().build();
+        spotifyApiService.forgetTokens();
     }
 }
