@@ -1,4 +1,4 @@
-FROM openjdk:17-buster
+FROM eclipse-temurin:25.0.3_9-jre-alpine-3.23
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y nginx
