@@ -1,0 +1,17 @@
+{
+	admin off
+	auto_https off
+}
+
+:80 {
+	# The API is served at the root of the Spring app, so strip /api before
+	# proxying — handle_path does that, plain handle would not.
+	handle_path /api/* {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		root * /var/www/html
+		file_server
+	}
+}
