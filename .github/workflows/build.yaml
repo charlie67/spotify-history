@@ -1,0 +1,92 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      "*"
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Tagging
+    types:
+      - completed
+
+env:
+  IMAGE_NAME: spotify-history
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Tagging bumps the tag with GITHUB_TOKEN, and pushes made with that token
+      # do not fire a `push` event, so the tag has to be resolved and checked out
+      # here instead.
+      - name: Set DOCKER_TAG_NAME
+        run: |
+          if [ $GITHUB_EVENT_NAME = "workflow_run" ]; then
+            git fetch --tags
+            latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+            git checkout $latest_tag
+            echo "DOCKER_TAG_NAME=$latest_tag" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+      - run: echo "DOCKER_TAG_NAME is ${{ env.DOCKER_TAG_NAME }}"
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+
+      - name: Build with Maven
+        run: ./mvnw -B clean install
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            # workflow_run builds the checked-out tag, but github.ref_name is the
+            # default branch, so type=semver never matches. Tag it explicitly.
+            type=raw,value=${{ env.DOCKER_TAG_NAME }},enable=${{ github.event_name == 'workflow_run' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
