@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25.0.3_9-jre-alpine-3.23
+FROM eclipse-temurin:25.0.4.1_1-jre-alpine-3.24
 COPY --from=caddy:2-alpine /usr/bin/caddy /usr/bin/caddy
 COPY application/target/spotify-history-application-0.0.1-SNAPSHOT-exec.jar /app.jar
 COPY ui/index.html /var/www/html/index.html
