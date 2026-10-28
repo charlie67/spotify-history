@@ -28,10 +28,15 @@ import to.charlie.integrationTests.spotifyPlayHistory.utilities.Context;
 import to.charlie.integrationTests.spotifyPlayHistory.utilities.DataLoader;
 import to.charlie.integrationTests.spotifyPlayHistory.utilities.Ports;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpSteps {
 
@@ -195,6 +200,18 @@ public class HttpSteps {
 			return;
 		}
 
+		// The UI hands these straight to `new Date(...)`, so an epoch number would parse as a date in
+		// 1970 rather than fail. Only an ISO-8601 string passes.
+		if (expected.isTextual() && expected.asText().equals("<valid_timestamp>")) {
+			try {
+				Instant.parse(actual.textValue());
+			} catch (final NullPointerException | DateTimeParseException e) {
+				throw new AssertionError("Expected an ISO-8601 timestamp at '" + path
+								+ "', but got '" + actual + "'.");
+			}
+			return;
+		}
+
 		if (expected.isObject()) {
 			if (!actual.isObject()) {
 				throw new AssertionError("Expected an object at '" + path + "', but got: " + actual);
@@ -233,6 +250,17 @@ public class HttpSteps {
 		if (!expected.equals(actual)) {
 			throw new AssertionError("Expected '" + expected + "' at '" + path + "', but got '" + actual + "'.");
 		}
+	}
+
+	@Then("the response field {string} should be {int} months after {string}")
+	public void theResponseFieldShouldBeMonthsAfter(final String laterField, final int months,
+	                                                final String earlierField) {
+		final DocumentContext document = JsonPath.parse(context.get("RESPONSE_BODY"));
+		final Instant earlier = Instant.parse(document.read("$." + earlierField, String.class));
+		final Instant later = Instant.parse(document.read("$." + laterField, String.class));
+
+		assertEquals(earlier.atZone(ZoneOffset.UTC).plusMonths(months).toInstant(), later,
+						"Expected '" + laterField + "' to be " + months + " months after '" + earlierField + "'");
 	}
 
 	@Then("I store the value of {string} from the HTTP response as {string}")

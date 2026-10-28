@@ -77,7 +77,12 @@ public class SpotifyAuthController
         spotifyApiService.refreshTokenExpiresAt().orElse(null)));
   }
 
-  @GetMapping("/get-user-code")
+  /**
+   * Spotify sends the user back to whatever redirect URI is registered, and the deployed one ends in
+   * a slash. Spring Boot 2 matched that against {@code /get-user-code} on its own; Spring 6 and
+   * later do not, so both spellings are mapped explicitly rather than 404ing the end of a sign in.
+   */
+  @GetMapping({"/get-user-code", "/get-user-code/"})
   public ResponseEntity<String> getSpotifyUserCode(@RequestParam("code") String userCode)
   {
     AuthorizationCodeRequest authorizationCodeRequest = spotifyApiService.spotifyApi.authorizationCode(userCode).build();

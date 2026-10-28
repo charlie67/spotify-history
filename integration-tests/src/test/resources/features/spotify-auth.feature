@@ -25,6 +25,37 @@ Feature: Spotify authentication
     When I send an HTTP GET request to "/loginState"
     Then "RESPONSE_BODY" should be "true"
 
+  Scenario: The sign in callback also works with a trailing slash
+    # The redirect URI registered with Spotify ends in a slash, and Spring no longer matches that
+    # against the path without one.
+    Given the POST URL "/api/token" is set to return the JSON from file "spotify/token/token-response.json"
+    When I send an HTTP GET request to "/get-user-code/?code=test-user-code"
+    Then "RESPONSE_STATUS" should be "200"
+    And "RESPONSE_BODY" should be "Auth successful"
+    And the token table should contain the following tokens:
+      | id | refresh_token      |
+      | 1  | test-refresh-token |
+
+  Scenario: The auth status of a signed in user says when the sign in expires
+    # This is what the UI's "Already logged in" message and its expiry date are built from.
+    Given the POST URL "/api/token" is set to return the JSON from file "spotify/token/token-response.json"
+    When I send an HTTP GET request to "/get-user-code?code=test-user-code"
+    Then "RESPONSE_STATUS" should be "200"
+    When I send an HTTP GET request to "/authStatus"
+    Then "RESPONSE_STATUS" should be "200"
+    And the response body should match the file: "spotify/auth/signed-in-status.json"
+    And the response field "refreshTokenExpiresAt" should be 6 months after "refreshTokenIssuedAt"
+
+  Scenario: A signed in user whose token predates issue dates gets no expiry date
+    # Tokens stored before issued_at existed have an unknown age, so no date is better than a wrong one.
+    Given the POST URL "/api/token" is set to return the JSON from file "spotify/token/token-response.json"
+    When I send an HTTP GET request to "/get-user-code?code=test-user-code"
+    Then "RESPONSE_STATUS" should be "200"
+    Given the stored token has no issue date
+    When I send an HTTP GET request to "/authStatus"
+    Then "RESPONSE_STATUS" should be "200"
+    And the response body should match the file: "spotify/auth/signed-in-unknown-expiry-status.json"
+
   Scenario: A failed code exchange tells the user to try again and leaves them logged out
     Given the POST URL "/api/token" is set to return status 400
     When I send an HTTP GET request to "/get-user-code?code=expired-user-code"

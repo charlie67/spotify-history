@@ -85,6 +85,15 @@ public class SpotifyDataSteps {
 		}
 	}
 
+	/**
+	 * Leaves the stored token looking like one saved before the V3 migration added issued_at, whose
+	 * age cannot be known.
+	 */
+	@Given("the stored token has no issue date")
+	public void theStoredTokenHasNoIssueDate() {
+		jdbcTemplate.update("UPDATE token SET issued_at = NULL");
+	}
+
 	@Then("the play table should contain the following plays:")
 	public void thePlayTableShouldContainTheFollowingPlays(final DataTable table) {
 		assertTableEventuallyMatches(SELECT_PLAYS, List.of("id", "track_id"), table);

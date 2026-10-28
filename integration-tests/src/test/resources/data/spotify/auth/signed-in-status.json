@@ -1,0 +1,6 @@
+{
+  "loggedIn": true,
+  "reauthorisationRequired": false,
+  "refreshTokenIssuedAt": "<valid_timestamp>",
+  "refreshTokenExpiresAt": "<valid_timestamp>"
+}
