@@ -75,6 +75,17 @@ Feature: Spotify authentication
     When I send an HTTP GET request to "/loginState"
     Then "RESPONSE_BODY" should be "true"
 
+  Scenario: The token refresh job is persisted in the database
+    Then the token refresh job should be stored in the Quartz job store
+
+  Scenario: Quartz runs the token refresh job
+    Given the POST URL "/api/token" is set to return the JSON from file "spotify/token/token-response.json"
+    When I send an HTTP GET request to "/get-user-code?code=test-user-code"
+    Then "RESPONSE_STATUS" should be "200"
+    Given the POST URL "/api/token" is set to return the JSON from file "spotify/token/refreshed-token-response.json"
+    When Quartz fires the token refresh job
+    Then the POST URL "/api/token" should have been called 2 times
+
   Scenario: Nothing is refreshed before the user has ever signed in
     # There is no token to refresh, so the job must not go to Spotify with an empty one and read the
     # rejection as an expired sign in.

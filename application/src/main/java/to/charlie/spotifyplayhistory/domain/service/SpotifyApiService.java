@@ -142,8 +142,6 @@ public class SpotifyApiService
     }
   }
 
-  @Scheduled(fixedDelayString = "${history.refreshTokenDelayMs:1000000}",
-             initialDelayString = "${history.refreshTokenInitialDelayMs:0}")
   public void refreshAuthCode()
   {
     refreshAccessToken();
