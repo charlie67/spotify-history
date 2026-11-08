@@ -2,32 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login Page</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
 
     <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha384-fgGyf7Mo7DURSOMnOy7ed+dkq5Job205Gnzu6QIg0BOHKaqt4D76Dt8VlDCzcMHV" crossorigin="anonymous"></script>
 
 </head>
 <body>
-<h1 id="header-message">.</h1>
-<button onclick="LandingPage()">Sign in</button>
+<main>
+    <section class="card sign-in" aria-label="Sign in">
+        <div id="status" class="status" hidden>
+            <h1 id="header-message"></h1>
+        </div>
+        <button type="button" class="button" onclick="LandingPage()">Sign in</button>
+    </section>
 
-<h1>Playlist Creation</h1>
-<form action="#" id="form" onsubmit="sendCommand();return false;">
+    <section class="card" aria-labelledby="playlist-heading">
+        <h2 id="playlist-heading">Playlist Creation</h2>
+        <form action="#" id="form" class="playlist-form" onsubmit="sendCommand();return false;">
+            <label class="field" for="startTime">Start Time
+                <input id="startTime" name="startTime" type="date">
+            </label>
 
-    <label for="startTime">Start Time</label>
-    <input id="startTime" name="startTime" type="date"><br><br>
+            <label class="field" for="endTime">End Time
+                <input id="endTime" name="endTime" type="date">
+            </label>
 
-    <label for="endTime">End Time</label>
-    <input id="endTime" name="endTime" type="date"><br><br>
+            <label class="field" for="amount">Amount
+                <input id="amount" name="amount" type="text">
+            </label>
 
-    <label for="amount">Amount</label>
-    <input id="amount" name="amount" type="text"><br><br>
+            <label class="field" for="name">Name
+                <input id="name" name="name" type="text">
+            </label>
 
-    <label for="name">Name</label>
-    <input id="name" name="name" type="text"><br><br>
-
-    <button>Send</button>
-</form>
+            <button class="button">Send</button>
+        </form>
+    </section>
+</main>
 </body>
 </html>
 
@@ -45,13 +62,18 @@
                 // back is signing in again - say so rather than leaving the user to work out why the
                 // history stopped.
                 if (status.reauthorisationRequired) {
-                    $("#header-message").text("Your Spotify sign in has expired. Please sign in again to carry on recording.");
+                    showStatus("warn", "Your Spotify sign in has expired. Please sign in again to carry on recording.");
                 } else if (status.loggedIn) {
-                    $("#header-message").text("Already logged in. Click here to login to a different account." + expiryMessage(status));
+                    showStatus("ok", "Already logged in. Click here to login to a different account." + expiryMessage(status));
                 } else {
-                    $("#header-message").text("Please login with Spotify to get started!");
+                    showStatus("info", "Please login with Spotify to get started!");
                 }
             })
+    }
+
+    function showStatus(kind, message) {
+        $("#status").removeClass("status--ok status--warn").addClass(kind === "info" ? "" : "status--" + kind).prop("hidden", false);
+        $("#header-message").text(message);
     }
 
     // Spotify sign ins last six months. Showing the date gives some warning before the recording
